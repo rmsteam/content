@@ -1,0 +1,1315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Approvel — Content Approval Platform</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=Epilogue:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet"/>
+<style>
+/* ─── RESET & BASE ─────────────────────────────────────── */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg0:#0d0d0b;
+  --bg1:#141412;
+  --bg2:#1c1c19;
+  --bg3:#242421;
+  --bg4:#2e2e2a;
+  --line:#2e2e2a;
+  --line2:#3d3d38;
+  --t0:#f0ede8;
+  --t1:#c4c0b8;
+  --t2:#7a7770;
+  --t3:#4a4845;
+  --acc:#e8d5a3;
+  --acc2:#c4a96b;
+  --red:#e05555;
+  --grn:#4caf72;
+  --amb:#d4882a;
+  --blu:#4a8fd4;
+  --blk:#c8c4bc;
+  --r6:6px;--r8:8px;--r10:10px;--r12:12px;--r16:16px;
+  --sidebar:230px;
+  --drawer:420px;
+  --font:'Epilogue',sans-serif;
+  --font-display:'Syne',sans-serif;
+}
+html,body{height:100%;overflow:hidden;background:var(--bg0)}
+body{font-family:var(--font);color:var(--t0);font-size:14px;-webkit-font-smoothing:antialiased;line-height:1.5}
+button,input,select,textarea{font-family:inherit;font-size:inherit}
+a{text-decoration:none;color:inherit}
+::-webkit-scrollbar{width:3px;height:3px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--line2);border-radius:2px}
+
+/* ─── STATUS SYSTEM ────────────────────────────────────── */
+/* pending=red, rejected=dark, approved=green, changes=amber, new=blue */
+
+/* ─── LAYOUT ─────────────────────────────────────────── */
+#app{display:flex;height:100vh;overflow:hidden}
+
+/* ─── SIDEBAR ─────────────────────────────────────────── */
+#sidebar{
+  width:var(--sidebar);min-width:var(--sidebar);
+  background:var(--bg1);border-right:1px solid var(--line);
+  display:flex;flex-direction:column;height:100vh;overflow:hidden;
+}
+.sb-head{
+  padding:20px 16px 18px;border-bottom:1px solid var(--line);
+  display:flex;align-items:center;gap:10px;
+}
+.sb-mark{
+  width:32px;height:32px;background:var(--acc);border-radius:var(--r8);
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+}
+.sb-mark svg{fill:var(--bg0)}
+.sb-wordmark{font-family:var(--font-display);font-size:18px;font-weight:700;color:var(--t0);letter-spacing:-.3px}
+.sb-body{flex:1;overflow-y:auto;padding:10px 8px}
+.sb-label{
+  font-size:9px;font-weight:600;letter-spacing:1.2px;text-transform:uppercase;
+  color:var(--t3);padding:10px 10px 6px;display:flex;align-items:center;justify-content:space-between;
+}
+.sb-label-add{
+  width:18px;height:18px;border-radius:4px;border:none;background:transparent;
+  color:var(--t3);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.12s;
+}
+.sb-label-add:hover{background:var(--bg3);color:var(--t1)}
+.nav-item{
+  display:flex;align-items:center;gap:9px;padding:7px 10px;border-radius:var(--r8);
+  cursor:pointer;font-size:12.5px;color:var(--t2);transition:background .12s,color .12s;
+  user-select:none;margin-bottom:1px;
+}
+.nav-item:hover{background:var(--bg3);color:var(--t1)}
+.nav-item.active{background:var(--bg3);color:var(--t0);font-weight:500}
+.nav-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.nav-badge{
+  margin-left:auto;background:var(--red);color:#fff;
+  font-size:9px;font-weight:600;padding:1px 5px;border-radius:10px;
+}
+.sb-foot{
+  flex-shrink:0;padding:10px 8px;border-top:1px solid var(--line);
+}
+.sb-user{
+  display:flex;align-items:center;gap:9px;padding:8px 10px;
+  border-radius:var(--r8);cursor:pointer;transition:.12s;
+}
+.sb-user:hover{background:var(--bg3)}
+.av{
+  width:28px;height:28px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:10px;font-weight:600;flex-shrink:0;font-family:var(--font-display);
+}
+.sb-uname{font-size:12px;font-weight:500;color:var(--t0)}
+.sb-urole{font-size:10px;color:var(--t3);text-transform:capitalize}
+.sb-out{
+  width:100%;text-align:left;padding:6px 10px;border:none;background:transparent;
+  color:var(--t3);font-size:11px;cursor:pointer;border-radius:var(--r6);transition:.12s;
+}
+.sb-out:hover{background:var(--bg3);color:var(--t1)}
+
+/* ─── MAIN ─────────────────────────────────────────────── */
+#main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
+
+/* ─── TOPBAR ─────────────────────────────────────────────── */
+#topbar{
+  flex-shrink:0;height:56px;
+  background:var(--bg1);border-bottom:1px solid var(--line);
+  padding:0 24px;display:flex;align-items:center;justify-content:space-between;gap:12px;
+}
+.topbar-title{font-family:var(--font-display);font-size:16px;font-weight:600;color:var(--t0);display:flex;align-items:center;gap:9px}
+.topbar-sub{font-size:11px;color:var(--t3);margin-top:1px}
+.topbar-r{display:flex;align-items:center;gap:8px}
+
+/* ─── TABS ─────────────────────────────────────────────── */
+.tabs{display:flex;background:var(--bg2);border:1px solid var(--line);border-radius:var(--r8);padding:3px;gap:2px}
+.tab{
+  padding:5px 14px;border-radius:6px;font-size:12px;font-weight:500;
+  border:none;background:transparent;cursor:pointer;color:var(--t3);
+  font-family:var(--font);transition:.12s;
+}
+.tab.on{background:var(--bg4);color:var(--t0)}
+.tab:hover:not(.on){color:var(--t1)}
+
+/* ─── BUTTONS ─────────────────────────────────────────── */
+.btn{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:7px 14px;border-radius:var(--r8);font-size:12px;font-weight:500;
+  cursor:pointer;border:1px solid transparent;font-family:var(--font);
+  transition:.12s;white-space:nowrap;line-height:1;
+}
+.btn-gold{background:var(--acc);color:var(--bg0);border-color:var(--acc)}
+.btn-gold:hover{background:var(--acc2);border-color:var(--acc2)}
+.btn-outline{background:transparent;color:var(--t1);border-color:var(--line2)}
+.btn-outline:hover{background:var(--bg3);border-color:var(--t3)}
+.btn-ghost{background:transparent;color:var(--t2);border-color:transparent}
+.btn-ghost:hover{background:var(--bg3);color:var(--t1)}
+.btn-danger{background:transparent;color:var(--red);border-color:rgba(224,85,85,.3)}
+.btn-danger:hover{background:rgba(224,85,85,.1)}
+.btn-sm{padding:5px 10px;font-size:11px}
+.btn-icon{padding:6px;width:30px;height:30px;justify-content:center}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+
+/* ─── CONTENT ─────────────────────────────────────────── */
+#content{flex:1;overflow-y:auto;padding:24px}
+
+/* ─── INPUT STYLES ──────────────────────────────────────── */
+.inp{
+  width:100%;padding:9px 12px;
+  border:1px solid var(--line2);border-radius:var(--r8);
+  background:var(--bg2);color:var(--t0);font-family:var(--font);font-size:13px;
+  outline:none;transition:.12s;
+}
+.inp:focus{border-color:var(--acc2);background:var(--bg3)}
+.inp::placeholder{color:var(--t3)}
+textarea.inp{resize:vertical;min-height:80px}
+
+/* ─── OVERVIEW ─────────────────────────────────────────── */
+.ov-wrap{max-width:900px;margin:0 auto}
+.stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:28px}
+.stat-card{
+  background:var(--bg2);border:1px solid var(--line);border-radius:var(--r12);
+  padding:22px 20px;position:relative;overflow:hidden;
+}
+.stat-card::before{
+  content:'';position:absolute;top:0;right:0;width:80px;height:80px;
+  border-radius:50%;transform:translate(30%,-30%);opacity:.07;
+}
+.stat-card.c-default::before{background:var(--t0)}
+.stat-card.c-amber::before{background:var(--amb)}
+.stat-card.c-green::before{background:var(--grn)}
+.stat-lbl{font-size:11px;color:var(--t3);margin-bottom:8px;font-weight:500;text-transform:uppercase;letter-spacing:.6px}
+.stat-val{font-family:var(--font-display);font-size:38px;font-weight:700;color:var(--t0);line-height:1}
+.stat-card.c-amber .stat-val{color:var(--amb)}
+.stat-card.c-green .stat-val{color:var(--grn)}
+.sec-title{font-size:10px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--t3);margin-bottom:14px}
+.proj-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+.proj-card{
+  background:var(--bg2);border:1px solid var(--line);border-radius:var(--r12);
+  padding:18px;cursor:pointer;transition:border-color .15s,box-shadow .15s;
+}
+.proj-card:hover{border-color:var(--line2);box-shadow:0 4px 24px rgba(0,0,0,.3)}
+.proj-top{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.proj-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.proj-name{font-family:var(--font-display);font-size:13px;font-weight:600;color:var(--t0)}
+.proj-client{font-size:11px;color:var(--t3);margin-top:1px}
+.proj-arrow{margin-left:auto;color:var(--t3)}
+.proj-stats{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.pst{background:var(--bg3);border-radius:6px;padding:7px 4px;text-align:center}
+.pst-n{font-family:var(--font-display);font-size:16px;font-weight:700}
+.pst-l{font-size:9px;color:var(--t3);margin-top:2px;text-transform:uppercase;letter-spacing:.3px}
+
+/* ─── LEGEND ─────────────────────────────────────────── */
+.legend{display:flex;gap:18px;flex-wrap:wrap;margin-bottom:20px;padding-bottom:18px;border-bottom:1px solid var(--line)}
+.leg-item{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--t2)}
+.leg-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+
+/* ─── FEED ─────────────────────────────────────────────── */
+.feed-wrap{max-width:900px}
+.feed-topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid var(--line)}
+.feed-counts{display:flex;gap:20px}
+.feed-count{text-align:center}
+.feed-count .fc-n{font-family:var(--font-display);font-size:15px;font-weight:700;color:var(--t0)}
+.feed-count .fc-l{font-size:10px;color:var(--t3);margin-top:1px}
+.feed-legend{display:flex;gap:12px;flex-wrap:wrap}
+.leg-item{display:flex;align-items:center;gap:5px;font-size:10px;color:var(--t2)}
+.leg-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+/* stories row */
+.stories-row{display:flex;gap:10px;margin-bottom:18px;overflow-x:auto;padding-bottom:4px}
+.story-bubble{display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer;flex-shrink:0}
+.story-ring{width:56px;height:56px;border-radius:50%;padding:2px;background:conic-gradient(var(--acc2),var(--acc),var(--acc2));display:flex;align-items:center;justify-content:center}
+.story-ring.st-approved{background:conic-gradient(var(--grn),#2d8a50,var(--grn))}
+.story-ring.st-rejected{background:conic-gradient(var(--t3),#3a3835,var(--t3))}
+.story-ring.st-changes{background:conic-gradient(var(--amb),#a06820,var(--amb))}
+.story-ring.st-pending{background:conic-gradient(var(--red),#a03030,var(--red))}
+.story-inner{width:50px;height:50px;border-radius:50%;background:var(--bg3);border:2px solid var(--bg1);overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:18px}
+.story-inner img{width:100%;height:100%;object-fit:cover}
+.story-lbl{font-size:9px;color:var(--t2);max-width:56px;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.stories-section-lbl{font-size:10px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;color:var(--t3);margin-bottom:10px}
+/* instagram grid */
+.ig-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:3px}
+.ig-cell{aspect-ratio:1;position:relative;cursor:pointer;overflow:hidden;background:var(--bg3)}
+.ig-cell img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .2s}
+.ig-cell:hover img{transform:scale(1.04)}
+.ig-cell canvas{position:absolute;inset:0;width:100%;height:100%}
+.ig-cell-inner{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:5px}
+.ig-cell-emoji{font-size:26px;line-height:1}
+.ig-cell-typename{font-size:9px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:rgba(255,255,255,.45)}
+/* overlay on hover */
+.ig-cell-hover{
+  position:absolute;inset:0;background:rgba(0,0,0,0);
+  display:flex;align-items:center;justify-content:center;gap:14px;
+  transition:background .18s;z-index:3;
+}
+.ig-cell:hover .ig-cell-hover{background:rgba(0,0,0,.45)}
+.ig-hover-stat{display:flex;align-items:center;gap:4px;color:#fff;font-size:12px;font-weight:600;opacity:0;transition:opacity .18s}
+.ig-cell:hover .ig-hover-stat{opacity:1}
+/* type icon top-right */
+.ig-type-ico{
+  position:absolute;top:7px;right:7px;z-index:2;
+  color:#fff;filter:drop-shadow(0 1px 3px rgba(0,0,0,.7));
+}
+/* status dot top-left */
+.ig-sdot{
+  position:absolute;top:8px;left:8px;z-index:2;
+  width:10px;height:10px;border-radius:50%;
+  border:2px solid rgba(0,0,0,.5);box-shadow:0 1px 4px rgba(0,0,0,.6);
+}
+/* bottom info strip on hover */
+.ig-bottom{
+  position:absolute;bottom:0;left:0;right:0;
+  background:linear-gradient(transparent,rgba(0,0,0,.75));
+  padding:20px 8px 8px;z-index:2;
+  opacity:0;transition:opacity .18s;
+}
+.ig-cell:hover .ig-bottom{opacity:1}
+.ig-bottom-date{font-size:9px;color:rgba(255,255,255,.7)}
+.ig-bottom-cap{font-size:10px;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
+
+/* ─── CALENDAR ─────────────────────────────────────────── */
+.cal-wrap{max-width:700px;margin:0 auto}
+.cal-day{margin-bottom:24px}
+.cal-dhead{display:flex;align-items:center;gap:12px;margin-bottom:10px}
+.cal-dnum{
+  width:42px;height:42px;background:var(--acc);border-radius:var(--r10);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;flex-shrink:0;
+}
+.cal-dnum .wd{font-size:8px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--bg0);opacity:.65}
+.cal-dnum .dd{font-family:var(--font-display);font-size:17px;font-weight:800;color:var(--bg0);line-height:1}
+.cal-dfull{font-size:13px;font-weight:500;color:var(--t0)}
+.cal-dcount{font-size:11px;color:var(--t3);margin-top:1px}
+.cal-items{display:flex;flex-direction:column;gap:6px;padding-left:54px}
+.cal-item{
+  background:var(--bg2);border:1px solid var(--line);border-radius:var(--r10);
+  padding:11px 13px;cursor:pointer;display:flex;align-items:flex-start;gap:10px;
+  transition:border-color .15s,box-shadow .15s;
+}
+.cal-item:hover{border-color:var(--line2);box-shadow:0 2px 12px rgba(0,0,0,.25)}
+.cal-bar{width:3px;align-self:stretch;border-radius:2px;flex-shrink:0;min-height:32px}
+.cal-info{flex:1;min-width:0}
+.cal-row1{display:flex;align-items:center;gap:6px;margin-bottom:5px;flex-wrap:wrap}
+.cal-typetag{
+  font-size:9px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;
+  background:var(--bg3);color:var(--t3);padding:2px 6px;border-radius:3px;
+}
+.cal-sbadge{font-size:10px;font-weight:600;padding:2px 7px;border-radius:4px}
+.cal-time{margin-left:auto;font-size:10px;color:var(--t3)}
+.cal-cap{font-size:12.5px;color:var(--t1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cal-prev-cmt{font-size:10px;color:var(--t3);font-style:italic;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* ─── DRAWER ─────────────────────────────────────────── */
+#ov{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;animation:fi .18s ease}
+#drawer{
+  position:fixed;top:0;right:0;height:100vh;width:var(--drawer);
+  background:var(--bg1);border-left:1px solid var(--line);
+  z-index:201;display:flex;flex-direction:column;
+  animation:si .22s cubic-bezier(.22,1,.36,1);
+}
+@keyframes fi{from{opacity:0}to{opacity:1}}
+@keyframes si{from{transform:translateX(100%)}to{transform:translateX(0)}}
+.dr-head{
+  flex-shrink:0;padding:16px 18px;border-bottom:1px solid var(--line);
+  display:flex;align-items:center;justify-content:space-between;
+}
+.dr-head-l{display:flex;align-items:center;gap:8px}
+.dr-head-l h3{font-family:var(--font-display);font-size:14px;font-weight:600;color:var(--t0)}
+.dr-head-l span{font-size:11px;color:var(--t3)}
+.dr-body{flex:1;overflow-y:auto}
+.dr-thumb{
+  width:100%;aspect-ratio:1;background:var(--bg2);
+  display:flex;align-items:center;justify-content:center;
+  border-bottom:1px solid var(--line);overflow:hidden;
+}
+.dr-thumb img{width:100%;height:100%;object-fit:cover}
+.dr-sec{padding:16px 18px;border-bottom:1px solid var(--line)}
+.dr-sec-lbl{font-size:9px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--t3);margin-bottom:10px}
+.dr-caption{font-size:13px;color:var(--t1);line-height:1.65}
+.st-pills{display:flex;gap:6px;flex-wrap:wrap}
+.st-pill{
+  padding:6px 12px;border-radius:6px;font-size:11px;font-weight:600;
+  border:1.5px solid transparent;cursor:pointer;font-family:var(--font);transition:.15s;
+}
+.st-pill:hover{opacity:.8}
+.st-pill.on{border-color:currentColor !important;outline:none}
+.cmts{padding:14px 18px;display:flex;flex-direction:column;gap:10px}
+.cmt-bubble{display:flex;gap:8px}
+.cmt-bubble.mine{flex-direction:row-reverse}
+.cmt-av{width:26px;height:26px;border-radius:50%;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:600;color:var(--t1);flex-shrink:0;margin-top:2px;font-family:var(--font-display)}
+.cmt-inner{max-width:80%}
+.cmt-text{
+  display:inline-block;padding:8px 11px;border-radius:10px;
+  font-size:12px;line-height:1.5;background:var(--bg3);color:var(--t1);
+}
+.cmt-bubble:not(.mine) .cmt-text{border-radius:2px 10px 10px 10px}
+.cmt-bubble.mine .cmt-text{background:var(--acc);color:var(--bg0);border-radius:10px 2px 10px 10px}
+.cmt-meta{font-size:9px;color:var(--t3);margin-top:4px;padding:0 2px}
+.no-cmts{text-align:center;padding:28px;font-size:12px;color:var(--t3);font-style:italic}
+.dr-foot{
+  flex-shrink:0;padding:12px 18px;border-top:1px solid var(--line);
+  display:flex;gap:8px;background:var(--bg1);
+}
+.dr-foot input{
+  flex:1;padding:9px 12px;border:1px solid var(--line2);border-radius:var(--r8);
+  background:var(--bg2);color:var(--t0);font-family:var(--font);font-size:12.5px;outline:none;transition:.12s;
+}
+.dr-foot input:focus{border-color:var(--acc2)}
+.dr-foot input::placeholder{color:var(--t3)}
+
+/* ─── MODALS ────────────────────────────────────────── */
+#modal-wrap{
+  position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:300;
+  display:flex;align-items:center;justify-content:center;padding:16px;
+  animation:fi .15s ease;
+}
+.modal{
+  background:var(--bg2);border:1px solid var(--line2);border-radius:var(--r16);
+  width:100%;box-shadow:0 20px 60px rgba(0,0,0,.5);max-height:90vh;overflow-y:auto;
+}
+.modal-sm{max-width:380px}
+.modal-md{max-width:480px}
+.modal-head{padding:18px 20px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between}
+.modal-head h2{font-family:var(--font-display);font-size:15px;font-weight:700;color:var(--t0)}
+.modal-body{padding:20px}
+.field{margin-bottom:16px}
+.field label{display:block;font-size:10px;font-weight:600;letter-spacing:.7px;text-transform:uppercase;color:var(--t3);margin-bottom:7px}
+.modal-foot{padding:14px 20px;border-top:1px solid var(--line);display:flex;gap:8px;justify-content:flex-end}
+.type-btns{display:flex;gap:6px}
+.type-btn{
+  flex:1;padding:9px 8px;border-radius:var(--r8);border:1px solid var(--line2);
+  background:var(--bg3);font-size:12px;font-weight:500;color:var(--t2);
+  cursor:pointer;text-align:center;font-family:var(--font);transition:.12s;
+}
+.type-btn.on{background:var(--acc);color:var(--bg0);border-color:var(--acc);font-weight:600}
+.type-btn:hover:not(.on){border-color:var(--line2);color:var(--t0)}
+.sw-row{display:flex;gap:8px;flex-wrap:wrap}
+.swatch{width:26px;height:26px;border-radius:50%;cursor:pointer;transition:.12s;flex-shrink:0}
+.swatch:hover{transform:scale(1.15)}
+.swatch.on{outline:2.5px solid var(--acc);outline-offset:2px}
+.role-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.role-btn{
+  padding:12px;border-radius:var(--r10);border:1px solid var(--line2);
+  background:var(--bg3);cursor:pointer;text-align:left;font-family:var(--font);transition:.12s;
+}
+.role-btn.on{background:var(--acc);border-color:var(--acc)}
+.role-btn.on .role-lbl{color:var(--bg0)}
+.role-btn.on .role-sub{color:rgba(0,0,0,.55)}
+.role-lbl{font-size:13px;font-weight:600;color:var(--t0);display:block;margin-bottom:3px}
+.role-sub{font-size:10px;color:var(--t3)}
+.err{background:rgba(224,85,85,.12);border:1px solid rgba(224,85,85,.3);border-radius:var(--r8);padding:9px 12px;font-size:12px;color:var(--red);margin-bottom:14px}
+.upload-z{
+  border:2px dashed var(--line2);border-radius:var(--r8);padding:28px;
+  text-align:center;cursor:pointer;transition:.12s;background:var(--bg3);
+}
+.upload-z:hover{border-color:var(--acc2);background:var(--bg4)}
+.upload-z .uico{font-size:22px;opacity:.3;margin-bottom:8px}
+.upload-z .ulbl{font-size:12px;color:var(--t3)}
+.img-prev{position:relative;border-radius:var(--r8);overflow:hidden}
+.img-prev img{width:100%;aspect-ratio:1;object-fit:cover;display:block}
+.img-rm{position:absolute;top:8px;right:8px;background:rgba(0,0,0,.6);border:none;color:#fff;width:22px;height:22px;border-radius:50%;cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center}
+
+/* ─── MEMBERS ───────────────────────────────────────── */
+.mem-row{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--line)}
+.mem-row:last-child{border-bottom:none}
+.mem-info{flex:1;min-width:0}
+.mem-name{font-size:13px;font-weight:500;color:var(--t0)}
+.mem-email{font-size:11px;color:var(--t3)}
+.mem-rbadge{font-size:10px;font-weight:600;padding:3px 8px;border-radius:4px;background:var(--bg4);color:var(--t2);text-transform:capitalize}
+
+/* ─── LOGIN SCREEN ──────────────────────────────────── */
+#login-screen{
+  position:fixed;inset:0;
+  background:var(--bg0);
+  display:flex;align-items:center;justify-content:center;z-index:400;
+  padding:16px;
+}
+.login-bg{
+  position:absolute;inset:0;overflow:hidden;pointer-events:none;
+}
+.login-bg::before{
+  content:'';position:absolute;top:-20%;left:-10%;
+  width:70%;height:70%;
+  background:radial-gradient(ellipse at center, rgba(232,213,163,.06) 0%, transparent 60%);
+}
+.login-bg::after{
+  content:'';position:absolute;bottom:-20%;right:-10%;
+  width:60%;height:60%;
+  background:radial-gradient(ellipse at center, rgba(74,143,212,.05) 0%, transparent 60%);
+}
+.login-card{
+  background:var(--bg1);border:1px solid var(--line2);border-radius:var(--r16);
+  padding:36px 32px;width:100%;max-width:360px;position:relative;z-index:1;
+  box-shadow:0 20px 60px rgba(0,0,0,.4);
+}
+.login-logo{display:flex;align-items:center;gap:10px;margin-bottom:6px}
+.login-mark{width:36px;height:36px;background:var(--acc);border-radius:9px;display:flex;align-items:center;justify-content:center}
+.login-mark svg{fill:var(--bg0)}
+.login-wm{font-family:var(--font-display);font-size:20px;font-weight:800;color:var(--t0)}
+.login-tag{font-size:12px;color:var(--t3);margin-bottom:28px}
+.lf{margin-bottom:14px}
+.lf label{display:block;font-size:10px;font-weight:600;letter-spacing:.7px;text-transform:uppercase;color:var(--t3);margin-bottom:6px}
+.login-switch{font-size:12px;color:var(--t3);text-align:center;margin-top:14px}
+.login-switch a{color:var(--acc);font-weight:500;cursor:pointer}
+.login-switch a:hover{color:var(--acc2)}
+.demo-sec{margin-top:22px;border-top:1px solid var(--line);padding-top:18px}
+.demo-lbl{font-size:9px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--t3);margin-bottom:10px}
+.demo-row{display:flex;align-items:center;gap:9px;padding:7px 8px;border-radius:var(--r8);cursor:pointer;transition:.12s}
+.demo-row:hover{background:var(--bg3)}
+.demo-name{font-size:12px;font-weight:500;color:var(--t0)}
+.demo-role{font-size:10px;color:var(--t3)}
+
+/* ─── EMPTY STATES ───────────────────────────────────── */
+.empty{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px;text-align:center}
+.empty-ico{font-size:36px;opacity:.15;margin-bottom:14px}
+.empty-ttl{font-family:var(--font-display);font-size:15px;font-weight:600;color:var(--t2);margin-bottom:5px}
+.empty-sub{font-size:12px;color:var(--t3)}
+
+/* ─── UTILITIES ─────────────────────────────────────── */
+.hidden{display:none!important}
+.truncate{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+input[type=file].hidden-file{display:none}
+</style>
+</head>
+<body>
+
+<!-- ══════════ LOGIN ══════════ -->
+<div id="login-screen">
+  <div class="login-bg"></div>
+  <div class="login-card">
+    <div class="login-logo">
+      <div class="login-mark"><svg width="16" height="16" viewBox="0 0 16 16"><path d="M8 1L1 6v9h5V10h4v5h5V6L8 1z"/></svg></div>
+      <span class="login-wm">Approvel</span>
+    </div>
+    <p class="login-tag">Content approval platform for agencies</p>
+
+    <div id="err-box" class="err hidden"></div>
+
+    <!-- LOGIN FORM -->
+    <div id="form-login">
+      <div class="lf"><label>Email</label><input class="inp" id="l-email" type="email" placeholder="you@agency.com"/></div>
+      <div class="lf"><label>Password</label><input class="inp" id="l-pass" type="password" placeholder="••••••••"/></div>
+      <button class="btn btn-gold" style="width:100%;justify-content:center;height:40px" onclick="doLogin()">Sign in</button>
+      <p class="login-switch">No account? <a onclick="showForm('signup')">Create one</a></p>
+    </div>
+
+    <!-- SIGNUP FORM -->
+    <div id="form-signup" class="hidden">
+      <div class="lf"><label>Full name</label><input class="inp" id="s-name" type="text" placeholder="Alex Kim"/></div>
+      <div class="lf"><label>Email</label><input class="inp" id="s-email" type="email" placeholder="you@agency.com"/></div>
+      <div class="lf"><label>Password</label><input class="inp" id="s-pass" type="password" placeholder="Minimum 8 characters"/></div>
+      <div class="lf">
+        <label>I am a…</label>
+        <div class="role-row">
+          <div class="role-btn on" id="rb-manager" onclick="pickRole('manager')">
+            <span class="role-lbl">🏢 Manager</span>
+            <span class="role-sub">Create projects & manage content</span>
+          </div>
+          <div class="role-btn" id="rb-client" onclick="pickRole('client')">
+            <span class="role-lbl">👤 Client</span>
+            <span class="role-sub">Review & approve posts</span>
+          </div>
+        </div>
+      </div>
+      <button class="btn btn-gold" style="width:100%;justify-content:center;height:40px" onclick="doSignup()">Create account</button>
+      <p class="login-switch">Already have an account? <a onclick="showForm('login')">Sign in</a></p>
+    </div>
+
+    <!-- DEMO ACCOUNTS -->
+    <div class="demo-sec">
+      <div class="demo-lbl">Demo accounts — click to sign in instantly</div>
+      <div id="demo-list"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ APP SHELL ══════════ -->
+<div id="app" class="hidden">
+  <!-- SIDEBAR -->
+  <div id="sidebar">
+    <div class="sb-head">
+      <div class="sb-mark"><svg width="14" height="14" viewBox="0 0 16 16"><path d="M8 1L1 6v9h5V10h4v5h5V6L8 1z"/></svg></div>
+      <span class="sb-wordmark">Approvel</span>
+    </div>
+    <div class="sb-body">
+      <a class="nav-item" id="nav-overview" onclick="go('overview')">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><rect x="1" y="1" width="6" height="6" rx="1.5" stroke="currentColor" stroke-width="1.3"/><rect x="9" y="1" width="6" height="6" rx="1.5" stroke="currentColor" stroke-width="1.3"/><rect x="1" y="9" width="6" height="6" rx="1.5" stroke="currentColor" stroke-width="1.3"/><rect x="9" y="9" width="6" height="6" rx="1.5" stroke="currentColor" stroke-width="1.3"/></svg>
+        Overview
+      </a>
+      <div class="sb-label" style="margin-top:8px">
+        Projects
+        <button class="sb-label-add" id="btn-np" onclick="openModal_NewProject()" title="New project">
+          <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M5.5 1v9M1 5.5h9" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+      <div id="sb-projs"></div>
+    </div>
+    <div class="sb-foot">
+      <div class="sb-user">
+        <div class="av" id="sb-av"></div>
+        <div style="min-width:0">
+          <div class="sb-uname truncate" id="sb-uname"></div>
+          <div class="sb-urole" id="sb-urole"></div>
+        </div>
+      </div>
+      <button class="sb-out" onclick="logout()">Sign out</button>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div id="main">
+    <div id="topbar">
+      <div>
+        <div class="topbar-title" id="tb-title">Overview</div>
+        <div class="topbar-sub" id="tb-sub"></div>
+      </div>
+      <div class="topbar-r" id="tb-actions"></div>
+    </div>
+    <div id="content"></div>
+  </div>
+</div>
+
+<!-- DRAWER OVERLAY -->
+<div id="ov" class="hidden" onclick="closeDrawer()"></div>
+<div id="drawer" class="hidden"></div>
+
+<!-- MODAL WRAPPER -->
+<div id="modal-wrap" class="hidden" onclick="closeModalWrap(event)">
+  <div id="modal-box"></div>
+</div>
+
+<script>
+'use strict';
+// ═══════════════════════════════════════════════════
+// DATA
+// ═══════════════════════════════════════════════════
+const DB_KEY = 'approvel_v3';
+const COLORS = ['#4f46e5','#0891b2','#059669','#d97706','#dc2626','#7c3aed','#db2777','#0f766e','#c2410c'];
+const STATUS = {
+  pending:  {label:'Pending review', c:'#e05555', bg:'rgba(224,85,85,.15)',  tc:'#f08080'},
+  approved: {label:'Approved',       c:'#4caf72', bg:'rgba(76,175,114,.15)', tc:'#6fcf8a'},
+  rejected: {label:'Rejected',       c:'#9a9790', bg:'rgba(154,151,144,.15)',tc:'#c8c4bc'},
+  changes:  {label:'Changes needed', c:'#d4882a', bg:'rgba(212,136,42,.15)', tc:'#e8a850'},
+  new:      {label:'New post',       c:'#4a8fd4', bg:'rgba(74,143,212,.15)', tc:'#72aee8'},
+};
+
+function uid(){return Math.random().toString(36).slice(2)+Date.now().toString(36)}
+
+let DB = (() => {
+  try { const d = JSON.parse(localStorage.getItem(DB_KEY)); if(d?.users) return d; } catch{}
+  return null;
+})();
+
+if(!DB){
+  const [m1,m2,c1,c2,c3] = [uid(),uid(),uid(),uid(),uid()];
+  const [p1,p2,p3] = [uid(),uid(),uid()];
+  const day = 86400000, now = Date.now();
+  function sched(daysAhead, hour){
+    const d=new Date(now + daysAhead*day);
+    d.setHours(hour,0,0,0); return d.getTime();
+  }
+  DB = {
+    users:[
+      {id:m1,name:'Alex Kim',       email:'alex@agency.com',      pw:'manager123',role:'manager',projs:[p1,p2,p3]},
+      {id:m2,name:'Mia Chen',       email:'mia@agency.com',       pw:'manager123',role:'manager',projs:[p1,p3]},
+      {id:c1,name:'TechCorp Client',email:'client@techcorp.com',  pw:'client123', role:'client', projs:[p1]},
+      {id:c2,name:'FoodBrand Client',email:'client@foodbrand.com',pw:'client123', role:'client', projs:[p2]},
+      {id:c3,name:'LifeStyle Client',email:'client@lifestyle.com',pw:'client123', role:'client', projs:[p3]},
+    ],
+    projects:[
+      {id:p1,name:'TechCorp Q2 2026',  client:'TechCorp',    color:'#4f46e5'},
+      {id:p2,name:'FoodBrand Summer',  client:'FoodBrand',   color:'#d97706'},
+      {id:p3,name:'LifeStyle Rebrand', client:'LifeStyle Co',color:'#dc2626'},
+    ],
+    posts:[
+      {id:uid(),pid:p1,type:'post', cap:'Introducing our new AI-powered dashboard. Smarter insights, faster decisions. #TechCorp #AI',   img:null,at:sched(1,10),status:'approved'},
+      {id:uid(),pid:p1,type:'story',cap:'Did you know? Our platform processes 1.5M+ data points per second. Stories that scale.',          img:null,at:sched(1,12),status:'changes'},
+      {id:uid(),pid:p1,type:'post', cap:'Meet the team behind the code. Human. Passionate. Building tomorrow today. #Culture',              img:null,at:sched(2,9), status:'pending'},
+      {id:uid(),pid:p1,type:'post', cap:'Sustainability meets tech. Our new green data centers are live. Zero carbon by 2027. 🌱',          img:null,at:sched(2,14),status:'new'},
+      {id:uid(),pid:p1,type:'story',cap:'HOT TAKE: The future of work is async. Are you ready? Swipe up for our free report.',               img:null,at:sched(3,11),status:'rejected'},
+      {id:uid(),pid:p1,type:'post', cap:'From startup to global. Our Dubai office opens this month. New markets, new possibilities.',        img:null,at:sched(3,16),status:'approved'},
+      {id:uid(),pid:p1,type:'reel', cap:'Behind the scenes: A day in the life at TechCorp HQ. Watch till the end for a surprise! 🎬',       img:null,at:sched(4,10),status:'pending'},
+      {id:uid(),pid:p2,type:'post', cap:'Summer flavors are HERE. Our new seasonal menu drops Friday. Tag your pizza squad 🍕',              img:null,at:sched(1,12),status:'approved'},
+      {id:uid(),pid:p2,type:'story',cap:'Behind the scenes: How our chefs craft the perfect summer bite. Full video on YouTube.',            img:null,at:sched(1,18),status:'pending'},
+      {id:uid(),pid:p2,type:'post', cap:'Fresh ingredients, bold flavors. Every dish tells a story. What\'s yours? 🌿',                     img:null,at:sched(2,11),status:'new'},
+      {id:uid(),pid:p3,type:'post', cap:'Rebrand reveal: New logo, same soul. What do you think? Tell us in the comments ✨',                img:null,at:sched(1,11),status:'changes'},
+      {id:uid(),pid:p3,type:'post', cap:'Bold. Fluid. Unmistakably you. The LifeStyle new collection is everything. 🌊',                    img:null,at:sched(2,10),status:'new'},
+    ],
+    comments:[],
+    session:null
+  };
+  // Seed a couple comments
+  const postIds = DB.posts.map(p=>p.id);
+  DB.comments = [
+    {id:uid(),postId:postIds[0],authorId:m1,body:'Looks great! Scheduling confirmed for Tuesday.',  at:now-3600000},
+    {id:uid(),postId:postIds[1],authorId:c1,body:'Can we update the stat to 2M? Q1 numbers just in.',at:now-1800000},
+    {id:uid(),postId:postIds[1],authorId:m1,body:'Absolutely — will revise and resubmit today.',    at:now-900000},
+    {id:uid(),postId:postIds[10],authorId:c3,body:'Love the palette! Can the copy be more playful?',at:now-600000},
+  ];
+  save();
+}
+
+function save(){localStorage.setItem(DB_KEY,JSON.stringify(DB))}
+
+// ═══════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════
+let CU = null; // current user
+let view = 'overview';
+let projId = null;
+let tab = 'feed';
+let signupRole = 'manager';
+let drawerPostId = null;
+let newPostType = 'post';
+let newPostImg = null;
+let newProjColor = COLORS[0];
+
+// ═══════════════════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════════════════
+const $ = id => document.getElementById(id);
+function initials(n){if(!n)return'?';return n.split(' ').filter(Boolean).map(w=>w[0]).join('').toUpperCase().slice(0,2)}
+function typeEmoji(t){return{post:'🖼',story:'🎞',reel:'🎬'}[t]||'📄'}
+function fmtDate(ts){return new Date(ts).toLocaleDateString('en-GB',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}
+function fmtTime(ts){return new Date(ts).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})}
+function fmtDateFull(ts){const d=new Date(ts);return d.toLocaleDateString('en-GB',{weekday:'long',month:'long',day:'numeric',year:'numeric'})}
+function dateKey(ts){const d=new Date(ts);d.setHours(0,0,0,0);return d.getTime()}
+function toDTL(ts){const d=new Date(ts),p=n=>String(n).padStart(2,'0');return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`}
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+function userProjects(u){return DB.projects.filter(p=>u.projs.includes(p.id))}
+function avStyle(role){return role==='manager'?'background:#2a2a4a;color:#8080d4':'background:#3a2a10;color:#c4872a'}
+function statusDot(s,size=10){return `<span style="display:inline-block;width:${size}px;height:${size}px;border-radius:50%;background:${STATUS[s].c};flex-shrink:0"></span>`}
+
+// ═══════════════════════════════════════════════════
+// AUTH
+// ═══════════════════════════════════════════════════
+function boot(){
+  renderDemoList();
+  if(DB.session){CU=DB.users.find(u=>u.id===DB.session);if(CU){enterApp();return}}
+  $('login-screen').classList.remove('hidden');
+}
+function renderDemoList(){
+  $('demo-list').innerHTML = DB.users.map(u=>`
+    <div class="demo-row" onclick="quickLogin('${u.id}')">
+      <div class="av" style="${avStyle(u.role)}">${initials(u.name)}</div>
+      <div>
+        <div class="demo-name">${esc(u.name)}</div>
+        <div class="demo-role">${u.role==='manager'?'Manager':'Client'} · ${userProjects(u).map(p=>esc(p.name)).join(', ')}</div>
+      </div>
+    </div>`).join('');
+}
+function showForm(f){
+  $('form-login').classList.toggle('hidden',f!=='login');
+  $('form-signup').classList.toggle('hidden',f!=='signup');
+  $('err-box').classList.add('hidden');
+}
+function pickRole(r){
+  signupRole=r;
+  $('rb-manager').classList.toggle('on',r==='manager');
+  $('rb-client').classList.toggle('on',r==='client');
+}
+function showErr(msg){$('err-box').textContent=msg;$('err-box').classList.remove('hidden')}
+function doLogin(){
+  const email=$('l-email').value.trim().toLowerCase();
+  const pw=$('l-pass').value;
+  const u=DB.users.find(u=>u.email.toLowerCase()===email&&u.pw===pw);
+  if(!u){showErr('Invalid email or password.');return}
+  CU=u;DB.session=u.id;save();enterApp();
+}
+function doSignup(){
+  const name=$('s-name').value.trim();
+  const email=$('s-email').value.trim().toLowerCase();
+  const pw=$('s-pass').value;
+  if(!name||!email||!pw){showErr('Please fill in all fields.');return}
+  if(pw.length<8){showErr('Password must be at least 8 characters.');return}
+  if(DB.users.find(u=>u.email.toLowerCase()===email)){showErr('An account with this email already exists.');return}
+  const u={id:uid(),name,email,pw,role:signupRole,projs:[]};
+  DB.users.push(u);DB.session=u.id;CU=u;save();enterApp();
+}
+function quickLogin(id){CU=DB.users.find(u=>u.id===id);DB.session=id;save();enterApp()}
+function logout(){DB.session=null;CU=null;save();closeDrawer();closeModal();$('app').classList.add('hidden');$('login-screen').classList.remove('hidden')}
+function enterApp(){
+  $('login-screen').classList.add('hidden');
+  $('app').classList.remove('hidden');
+  $('sb-av').textContent=initials(CU.name);
+  $('sb-av').setAttribute('style',avStyle(CU.role));
+  $('sb-uname').textContent=CU.name;
+  $('sb-urole').textContent=CU.role;
+  $('btn-np').style.display=CU.role==='manager'?'':'none';
+  renderSidebar();go('overview');
+}
+
+// ═══════════════════════════════════════════════════
+// SIDEBAR
+// ═══════════════════════════════════════════════════
+function renderSidebar(){
+  const projs=userProjects(CU);
+  if(!projs.length){
+    $('sb-projs').innerHTML=`<p style="padding:6px 10px;font-size:11px;color:var(--t3)">${CU.role==='manager'?'Click + to create a project':'No projects assigned yet'}</p>`;
+    return;
+  }
+  $('sb-projs').innerHTML=projs.map(p=>{
+    const cnt=DB.posts.filter(x=>x.pid===p.id&&(x.status==='pending'||x.status==='new')).length;
+    return `<a class="nav-item" id="nav-p-${p.id}" onclick="go('project','${p.id}')">
+      <span class="nav-dot" style="background:${p.color}"></span>
+      <span class="truncate" style="flex:1">${esc(p.name)}</span>
+      ${cnt?`<span class="nav-badge">${cnt}</span>`:''}
+    </a>`;
+  }).join('');
+}
+function setNavActive(){
+  document.querySelectorAll('.nav-item').forEach(el=>el.classList.remove('active'));
+  if(view==='overview')$('nav-overview')?.classList.add('active');
+  else if(view==='project')$(`nav-p-${projId}`)?.classList.add('active');
+}
+
+// ═══════════════════════════════════════════════════
+// ROUTING
+// ═══════════════════════════════════════════════════
+function go(v, pid=null){
+  view=v; if(pid)projId=pid;
+  closeDrawer(); setNavActive(); renderTopbar(); renderContent();
+}
+function switchTab(t){tab=t;renderTopbar();renderContent()}
+
+// ═══════════════════════════════════════════════════
+// TOPBAR
+// ═══════════════════════════════════════════════════
+function renderTopbar(){
+  if(view==='overview'){
+    $('tb-title').innerHTML='Overview';
+    $('tb-sub').textContent='';
+    $('tb-actions').innerHTML='';
+    return;
+  }
+  const p=DB.projects.find(x=>x.id===projId);
+  $('tb-title').innerHTML=`<span style="width:9px;height:9px;border-radius:50%;background:${p.color};display:inline-block"></span>${esc(p.name)}`;
+  $('tb-sub').textContent=p.client;
+  const isMgr=CU.role==='manager';
+  $('tb-actions').innerHTML=`
+    <div class="tabs">
+      <button class="tab ${tab==='feed'?'on':''}" onclick="switchTab('feed')">Feed</button>
+      <button class="tab ${tab==='calendar'?'on':''}" onclick="switchTab('calendar')">Calendar</button>
+    </div>
+    ${isMgr?`
+      <button class="btn btn-outline btn-sm" onclick="openModal_Members('${projId}')">
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><circle cx="6" cy="5" r="3" stroke="currentColor" stroke-width="1.4"/><path d="M1 14c0-3 2-5 5-5s5 2 5 5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><path d="M13 8v4m-2-2h4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+        Members
+      </button>
+      <button class="btn btn-gold btn-sm" onclick="openModal_NewPost('${projId}')">
+        <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M5.5 1v9M1 5.5h9" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+        Add post
+      </button>`:``}`;
+}
+
+// ═══════════════════════════════════════════════════
+// CONTENT
+// ═══════════════════════════════════════════════════
+function renderContent(){
+  if(view==='overview'){$('content').innerHTML=renderOverview();return}
+  $('content').innerHTML=tab==='feed'?renderFeed():renderCalendar();
+}
+
+// ─── OVERVIEW ───────────────────────────────────────
+function renderOverview(){
+  const projs=userProjects(CU);
+  const all=DB.posts.filter(p=>CU.projs.includes(p.pid));
+  const pending=all.filter(p=>p.status==='pending'||p.status==='new').length;
+  const approved=all.filter(p=>p.status==='approved').length;
+  return `<div class="ov-wrap">
+    <div class="stat-grid">
+      <div class="stat-card c-default"><div class="stat-lbl">Total posts</div><div class="stat-val">${all.length}</div></div>
+      <div class="stat-card c-amber"><div class="stat-lbl">Awaiting review</div><div class="stat-val">${pending}</div></div>
+      <div class="stat-card c-green"><div class="stat-lbl">Approved</div><div class="stat-val">${approved}</div></div>
+    </div>
+    <div class="sec-title">Your projects</div>
+    ${!projs.length?`<div class="empty"><div class="empty-ico">📁</div><div class="empty-ttl">No projects yet</div><div class="empty-sub">${CU.role==='manager'?'Click + next to Projects in the sidebar to get started':'Ask your manager to add you to a project'}</div></div>`:''}
+    <div class="proj-grid">
+      ${projs.map(p=>{
+        const posts=DB.posts.filter(x=>x.pid===p.id);
+        const byS={};Object.keys(STATUS).forEach(k=>byS[k]=posts.filter(x=>x.status===k).length);
+        return `<div class="proj-card" onclick="go('project','${p.id}')">
+          <div class="proj-top">
+            <span class="proj-dot" style="background:${p.color}"></span>
+            <div><div class="proj-name">${esc(p.name)}</div><div class="proj-client">${esc(p.client)}</div></div>
+            <svg class="proj-arrow" width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M6 4l4 4-4 4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+          </div>
+          <div class="proj-stats">
+            ${Object.keys(STATUS).map(s=>`
+              <div class="pst">
+                <div class="pst-n" style="color:${STATUS[s].c}">${byS[s]}</div>
+                <div class="pst-l">${STATUS[s].label.split(' ')[0]}</div>
+              </div>`).join('')}
+          </div>
+        </div>`;
+      }).join('')}
+    </div>
+  </div>`;
+}
+
+function fmtDateShort(ts){return new Date(ts).toLocaleDateString('en-GB',{day:'numeric',month:'short'})}
+
+// ─── THUMB PALETTES & CANVAS ────────────────────────
+const THUMB_PALETTES=[
+  ['#1a1060','#3d2a8a','#7c5cbf'],['#0a2a1a','#1a5c38','#3d9e6a'],
+  ['#2a1005','#7a3010','#c4682a'],['#08202e','#0f4a6e','#2a8abf'],
+  ['#1e0a28','#5c1a7a','#a04abf'],['#1a1a08','#4a4a10','#8a8a28'],
+  ['#280a0a','#7a1818','#c43838'],['#08282a','#107870','#28c4b8'],
+];
+function getThumbPalette(id){let h=0;for(let i=0;i<id.length;i++)h=(h*31+id.charCodeAt(i))>>>0;return THUMB_PALETTES[h%THUMB_PALETTES.length]}
+function drawThumb(canvas,post){
+  if(!canvas)return;
+  const sz=canvas.width=canvas.height=300;
+  const ctx=canvas.getContext('2d');
+  const pal=getThumbPalette(post.id);
+  const bg=ctx.createLinearGradient(0,0,sz,sz);
+  bg.addColorStop(0,pal[0]);bg.addColorStop(.6,pal[1]);bg.addColorStop(1,pal[2]);
+  ctx.fillStyle=bg;ctx.fillRect(0,0,sz,sz);
+  ctx.save();ctx.globalAlpha=.11;
+  for(let i=0;i<6;i++){
+    const x=Math.sin(i*1.3)*sz*.4+sz*.5,y=Math.cos(i*1.1)*sz*.4+sz*.5,r=sz*(.15+i*.04);
+    const g=ctx.createRadialGradient(x,y,0,x,y,r);
+    g.addColorStop(0,'rgba(255,255,255,.9)');g.addColorStop(1,'rgba(255,255,255,0)');
+    ctx.fillStyle=g;ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fill();
+  }
+  ctx.restore();
+  ctx.save();ctx.globalAlpha=.05;ctx.strokeStyle='rgba(255,255,255,.8)';ctx.lineWidth=.5;
+  for(let i=0;i<sz;i+=22){ctx.beginPath();ctx.moveTo(i,0);ctx.lineTo(i,sz);ctx.stroke();ctx.beginPath();ctx.moveTo(0,i);ctx.lineTo(sz,i);ctx.stroke()}
+  ctx.restore();
+  ctx.save();ctx.globalAlpha=.16;ctx.strokeStyle=pal[2];ctx.lineWidth=55;
+  ctx.beginPath();ctx.moveTo(-sz*.1,sz*.9);ctx.lineTo(sz*.9,-sz*.1);ctx.stroke();
+  ctx.restore();
+  if(post.type==='reel'){
+    ctx.save();ctx.globalAlpha=.22;ctx.fillStyle='rgba(0,0,0,.7)';
+    ctx.fillRect(0,sz*.41,sz,sz*.18);
+    ctx.globalAlpha=.32;ctx.fillStyle='rgba(255,255,255,.6)';
+    for(let i=0;i<6;i++)ctx.fillRect(sz*.04+i*(sz*.16),sz*.43,sz*.1,sz*.14);
+    ctx.restore();
+  }
+}
+
+// ─── FEED ───────────────────────────────────────────
+function renderFeed(){
+  const allPosts = DB.posts.filter(p=>p.pid===projId).sort((a,b)=>a.at-b.at);
+  const feedPosts = allPosts.filter(p=>p.type==='post'||p.type==='reel'); // only posts+reels in grid
+  const stories   = allPosts.filter(p=>p.type==='story');
+  if(!allPosts.length) return`<div class="empty"><div class="empty-ico">🖼</div><div class="empty-ttl">No content yet</div><div class="empty-sub">Add the first post with the button above</div></div>`;
+
+  const totals={approved:0,pending:0,changes:0,rejected:0,new:0};
+  allPosts.forEach(p=>totals[p.status]=(totals[p.status]||0)+1);
+
+  // Stories row
+  const storiesHtml = stories.length ? `
+    <div class="stories-section-lbl">Stories (${stories.length})</div>
+    <div class="stories-row">
+      ${stories.map(s=>{
+        const st=STATUS[s.status];
+        return `<div class="story-bubble" onclick="openDrawer('${s.id}')">
+          <div class="story-ring st-${s.status}">
+            <div class="story-inner">
+              ${s.img?`<img src="${s.img}" alt=""/>`: `<span style="font-size:20px">${typeEmoji(s.type)}</span>`}
+            </div>
+          </div>
+          <div class="story-lbl">${fmtDateShort(s.at)}</div>
+        </div>`;
+      }).join('')}
+    </div>` : '';
+
+  // Feed grid (posts + reels only — just like Instagram)
+  const gridHtml = feedPosts.length ? `
+    <div class="stories-section-lbl" style="margin-top:${stories.length?'18px':'0'}">${feedPosts.length} post${feedPosts.length!==1?'s':''} & reels</div>
+    <div class="ig-grid">
+      ${feedPosts.map(post=>{
+        const s=STATUS[post.status];
+        const cmts=DB.comments.filter(c=>c.postId===post.id).length;
+        const isReel=post.type==='reel';
+        const reelIco=`<svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M8 6.82v10.36c0 .79.87 1.27 1.54.84l8.14-5.18a1 1 0 000-1.69L9.54 5.98A1 1 0 008 6.82z"/></svg>`;
+        return `<div class="ig-cell" onclick="openDrawer('${post.id}')">
+          ${post.img
+            ? `<img src="${post.img}" alt=""/>`
+            : `<canvas id="cv-${post.id}" width="300" height="300"></canvas>
+               <div class="ig-cell-inner">
+                 <div class="ig-cell-emoji">${typeEmoji(post.type)}</div>
+                 <div class="ig-cell-typename">${post.type}</div>
+               </div>`
+          }
+          <div class="ig-sdot" style="background:${s.c}"></div>
+          ${isReel?`<div class="ig-type-ico">${reelIco}</div>`:''}
+          <div class="ig-cell-hover">
+            <div class="ig-hover-stat">💬 ${cmts}</div>
+          </div>
+          <div class="ig-bottom">
+            <div class="ig-bottom-date">${fmtDate(post.at)}</div>
+            <div class="ig-bottom-cap">${post.cap||''}</div>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>` : `<div class="empty" style="padding:28px 0"><div class="empty-ico">🖼</div><div class="empty-ttl">No posts or reels yet</div></div>`;
+
+  const legendHtml = Object.entries(STATUS).map(([k,v])=>`
+    <div class="leg-item"><span class="leg-dot" style="background:${v.c}"></span>${v.label}</div>`).join('');
+
+  const html = `<div class="feed-wrap">
+    <div class="feed-topbar">
+      <div class="feed-counts">
+        <div class="feed-count"><div class="fc-n">${feedPosts.length}</div><div class="fc-l">Posts & Reels</div></div>
+        <div class="feed-count"><div class="fc-n">${stories.length}</div><div class="fc-l">Stories</div></div>
+        <div class="feed-count"><div class="fc-n" style="color:var(--grn)">${totals.approved||0}</div><div class="fc-l">Approved</div></div>
+        <div class="feed-count"><div class="fc-n" style="color:var(--red)">${(totals.pending||0)+(totals.new||0)}</div><div class="fc-l">Pending</div></div>
+      </div>
+      <div class="feed-legend">${legendHtml}</div>
+    </div>
+    ${storiesHtml}
+    ${gridHtml}
+  </div>`;
+
+  setTimeout(()=>{
+    feedPosts.forEach(post=>{
+      if(!post.img){const cv=document.getElementById(`cv-${post.id}`);if(cv)drawThumb(cv,post)}
+    });
+  },0);
+  return html;
+}
+
+// ─── CALENDAR ───────────────────────────────────────
+function renderCalendar(){
+  const posts=DB.posts.filter(p=>p.pid===projId).sort((a,b)=>a.at-b.at);
+  if(!posts.length)return`<div class="empty"><div class="empty-ico">📅</div><div class="empty-ttl">No posts scheduled</div><div class="empty-sub">Add the first post with the button above</div></div>`;
+  const groups={};
+  posts.forEach(p=>{const k=dateKey(p.at);if(!groups[k])groups[k]=[];groups[k].push(p)});
+  return `<div class="cal-wrap">
+    ${Object.keys(groups).sort().map(k=>{
+      const items=groups[k]; const ts=parseInt(k);
+      const d=new Date(ts);
+      return `<div class="cal-day">
+        <div class="cal-dhead">
+          <div class="cal-dnum">
+            <span class="wd">${d.toLocaleDateString('en-GB',{weekday:'short'}).toUpperCase()}</span>
+            <span class="dd">${d.getDate()}</span>
+          </div>
+          <div>
+            <div class="cal-dfull">${fmtDateFull(ts)}</div>
+            <div class="cal-dcount">${items.length} item${items.length!==1?'s':''}</div>
+          </div>
+        </div>
+        <div class="cal-items">
+          ${items.map(post=>{
+            const s=STATUS[post.status];
+            const cmts=DB.comments.filter(c=>c.postId===post.id);
+            const last=cmts[cmts.length-1];
+            const lastA=last?DB.users.find(u=>u.id===last.authorId):null;
+            return `<div class="cal-item" onclick="openDrawer('${post.id}')">
+              <div class="cal-bar" style="background:${s.c}"></div>
+              <div class="cal-info">
+                <div class="cal-row1">
+                  <span class="cal-typetag">${post.type}</span>
+                  <span class="cal-sbadge" style="background:${s.bg};color:${s.tc}">${s.label}</span>
+                  <span class="cal-time">${fmtTime(post.at)}</span>
+                </div>
+                <div class="cal-cap">${post.cap?esc(post.cap):'<em style="color:var(--t3)">No caption</em>'}</div>
+                ${last?`<div class="cal-prev-cmt">💬 ${esc(lastA?.name?.split(' ')[0]||'?')}: "${esc(last.body)}"</div>`:''}
+              </div>
+            </div>`;
+          }).join('')}
+        </div>
+      </div>`;
+    }).join('')}
+  </div>`;
+}
+
+// ═══════════════════════════════════════════════════
+// DRAWER
+// ═══════════════════════════════════════════════════
+function openDrawer(postId){drawerPostId=postId;renderDrawer();$('ov').classList.remove('hidden');$('drawer').classList.remove('hidden')}
+function closeDrawer(){drawerPostId=null;$('ov').classList.add('hidden');$('drawer').classList.add('hidden')}
+
+function renderDrawer(){
+  const post=DB.posts.find(p=>p.id===drawerPostId);
+  if(!post)return;
+  const s=STATUS[post.status];
+  const cmts=DB.comments.filter(c=>c.postId===post.id).sort((a,b)=>a.at-b.at);
+  const isMgr=CU.role==='manager';
+  const pillsHtml=Object.entries(STATUS).map(([k,v])=>{
+    if(!isMgr&&(k==='new'||k==='rejected'))return'';
+    const on=post.status===k;
+    return `<button class="st-pill ${on?'on':''}" style="background:${v.bg};color:${v.tc};${on?'border-color:'+v.c:''}" onclick="setStatus('${post.id}','${k}')">${v.label}</button>`;
+  }).join('');
+  const cmtsHtml=!cmts.length?`<div class="no-cmts">No comments yet. Leave feedback below.</div>`:
+    cmts.map(c=>{
+      const a=DB.users.find(u=>u.id===c.authorId);
+      const mine=c.authorId===CU.id;
+      return `<div class="cmt-bubble ${mine?'mine':''}">
+        <div class="cmt-av" style="${avStyle(a?.role||'client')}">${initials(a?.name||'?')}</div>
+        <div class="cmt-inner">
+          <div class="cmt-text">${esc(c.body)}</div>
+          <div class="cmt-meta">${esc(a?.name?.split(' ')[0]||'?')} · ${fmtTime(c.at)}</div>
+        </div>
+      </div>`;
+    }).join('');
+  $('drawer').innerHTML=`
+    <div class="dr-head">
+      <div class="dr-head-l">
+        <h3>${post.type.charAt(0).toUpperCase()+post.type.slice(1)}</h3>
+        <span>·</span><span>${fmtDate(post.at)}</span>
+      </div>
+      <button class="btn btn-ghost btn-icon btn-sm" onclick="closeDrawer()">
+        <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><path d="M2 2l10 10M12 2L2 12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+    <div class="dr-body">
+      <div class="dr-thumb" style="position:relative;overflow:hidden;background:var(--bg3)">
+        ${post.imgs && post.imgs.length > 1
+          ? `<div style="display:grid;grid-template-columns:repeat(${Math.min(post.imgs.length,3)},1fr);gap:2px;width:100%">
+               ${post.imgs.map(src=>`<img src="${src}" style="width:100%;aspect-ratio:1;object-fit:cover;display:block"/>`).join('')}
+             </div>`
+          : post.img
+            ? `<img src="${post.img}" alt="" style="width:100%;aspect-ratio:1;object-fit:cover;display:block"/>`
+            : `<canvas id="dr-cv" width="420" height="420" style="position:absolute;inset:0;width:100%;height:100%"></canvas>
+               <div style="position:relative;z-index:1;text-align:center">
+                 <div style="font-size:52px;line-height:1;filter:drop-shadow(0 2px 12px rgba(0,0,0,.5))">${typeEmoji(post.type)}</div>
+                 <div style="font-size:11px;color:rgba(255,255,255,.5);margin-top:10px;font-weight:500;letter-spacing:.5px;text-transform:uppercase">${post.type}</div>
+               </div>`
+        }
+      </div>
+      <div class="dr-sec">
+        <div class="dr-sec-lbl">Caption</div>
+        <div class="dr-caption">${post.cap?esc(post.cap):'<em style="color:var(--t3)">No caption added</em>'}</div>
+      </div>
+      <div class="dr-sec">
+        <div class="dr-sec-lbl">Status</div>
+        <div class="st-pills">${pillsHtml}</div>
+      </div>
+      <div class="dr-sec" style="border-bottom:none">
+        <div class="dr-sec-lbl">Comments ${cmts.length?`(${cmts.length})`:''}</div>
+      </div>
+      <div class="cmts" id="cmts-list">${cmtsHtml}</div>
+      <div style="height:6px"></div>
+    </div>
+    <div class="dr-foot">
+      <input id="cmt-inp" type="text" placeholder="Leave a comment…" onkeydown="if(event.key==='Enter')submitComment()"/>
+      <button class="btn btn-gold btn-sm btn-icon" onclick="submitComment()">
+        <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M1 6.5h11M7.5 2l4.5 4.5L7.5 11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+    </div>`;
+  // Draw canvas thumbnail in drawer
+  if(!post.img){
+    setTimeout(()=>{const cv=document.getElementById('dr-cv');if(cv)drawThumb(cv,post)},0);
+  }
+}
+
+function setStatus(postId,status){
+  const p=DB.posts.find(x=>x.id===postId);
+  if(p){p.status=status;save()}
+  renderDrawer();renderContent();renderSidebar();
+}
+function submitComment(){
+  const inp=$('cmt-inp'); const body=inp?.value?.trim();
+  if(!body)return;
+  DB.comments.push({id:uid(),postId:drawerPostId,authorId:CU.id,body,at:Date.now()});
+  save(); inp.value=''; renderDrawer(); renderContent();
+  setTimeout(()=>{const l=$('cmts-list');if(l)l.scrollTop=l.scrollHeight},50);
+}
+
+// ═══════════════════════════════════════════════════
+// MODALS
+// ═══════════════════════════════════════════════════
+function showModal(html,size='modal-sm'){
+  $('modal-box').className=`modal ${size}`;
+  $('modal-box').innerHTML=html;
+  $('modal-wrap').classList.remove('hidden');
+}
+function closeModal(){$('modal-wrap').classList.add('hidden')}
+function closeModalWrap(e){if(e.target.id==='modal-wrap')closeModal()}
+
+// ─── NEW PROJECT ─────────────────────────────────────
+function openModal_NewProject(){
+  newProjColor=COLORS[0];
+  showModal(`
+    <div class="modal-head">
+      <h2>New project</h2>
+      <button class="btn btn-ghost btn-icon btn-sm" onclick="closeModal()"><svg width="13" height="13" viewBox="0 0 14 14" fill="none"><path d="M2 2l10 10M12 2L2 12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></button>
+    </div>
+    <div class="modal-body">
+      <div class="field"><label>Project name</label><input class="inp" id="np-name" type="text" placeholder="TechCorp Q2 2026"/></div>
+      <div class="field"><label>Client name</label><input class="inp" id="np-client" type="text" placeholder="TechCorp"/></div>
+      <div class="field"><label>Brand colour</label>
+        <div class="sw-row" id="sw-row">
+          ${COLORS.map((c,i)=>`<div class="swatch ${i===0?'on':''}" style="background:${c}" onclick="pickProjColor('${c}',this)"></div>`).join('')}
+        </div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-outline" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-gold" onclick="createProject()">Create project</button>
+    </div>`);
+}
+function pickProjColor(c,el){
+  newProjColor=c;
+  document.querySelectorAll('.swatch').forEach(s=>s.classList.remove('on'));
+  el.classList.add('on');
+}
+function createProject(){
+  const name=$('np-name').value.trim(),client=$('np-client').value.trim();
+  if(!name||!client){alert('Please fill in all fields');return}
+  const p={id:uid(),name,client,color:newProjColor};
+  DB.projects.push(p);
+  const dbU=DB.users.find(u=>u.id===CU.id);
+  dbU.projs.push(p.id);CU.projs.push(p.id);
+  save(); closeModal(); renderSidebar(); go('project',p.id);
+}
+
+// ─── NEW POST ─────────────────────────────────────
+let newPostImages = []; // array of dataURLs for multi-image posts
+function openModal_NewPost(pid){
+  newPostType='post'; newPostImg=null; newPostImages=[];
+  const tomorrow=new Date();tomorrow.setDate(tomorrow.getDate()+1);tomorrow.setHours(10,0,0,0);
+  showModal(`
+    <div class="modal-head">
+      <h2>Add new post</h2>
+      <button class="btn btn-ghost btn-icon btn-sm" onclick="closeModal()"><svg width="13" height="13" viewBox="0 0 14 14" fill="none"><path d="M2 2l10 10M12 2L2 12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></button>
+    </div>
+    <div class="modal-body">
+      <div class="field"><label>Type</label>
+        <div class="type-btns">
+          <button class="type-btn on" id="tb-post" onclick="pickPostType('post')">📋 Post</button>
+          <button class="type-btn" id="tb-story" onclick="pickPostType('story')">🎞 Story</button>
+          <button class="type-btn" id="tb-reel" onclick="pickPostType('reel')">🎬 Reel</button>
+        </div>
+      </div>
+      <div class="field">
+        <label>Image / Video <span style="color:var(--t3);font-weight:400;text-transform:none;font-size:10px">— click or drag to upload</span></label>
+        <div id="upload-area" ondragover="event.preventDefault()" ondrop="handleImgDrop(event)">
+          <div class="upload-z" onclick="$('file-inp').click()" style="padding:36px">
+            <div class="uico" style="font-size:32px;opacity:.25;margin-bottom:10px">🖼</div>
+            <div class="ulbl" style="font-size:13px;color:var(--t2)">Click to upload or drag & drop</div>
+            <div class="ulbl" style="font-size:10px;margin-top:4px">JPG, PNG, GIF, MP4</div>
+          </div>
+          <input class="hidden-file" type="file" id="file-inp" accept="image/*,video/*" multiple onchange="handleImg(event)"/>
+        </div>
+      </div>
+      <div class="field"><label>Caption</label><textarea class="inp" id="np-cap" placeholder="Write your caption…" rows="3"></textarea></div>
+      <div class="field"><label>Schedule date & time</label><input class="inp" id="np-dt" type="datetime-local" value="${toDTL(tomorrow.getTime())}"/></div>
+      <div class="field"><label>Initial status</label>
+        <select class="inp" id="np-status">
+          <option value="new">🔵 New post</option>
+          <option value="pending">🔴 Pending review</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-outline" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-gold" onclick="createPost('${pid}')">Add post</button>
+    </div>`, 'modal-md');
+}
+function pickPostType(t){
+  newPostType=t;
+  ['post','story','reel'].forEach(x=>$(`tb-${x}`)?.classList.toggle('on',x===t));
+}
+function handleImgDrop(e){
+  e.preventDefault();
+  const files=[...e.dataTransfer.files].filter(f=>f.type.startsWith('image/')||f.type.startsWith('video/'));
+  if(files.length)loadImgFiles(files);
+}
+function handleImg(e){
+  const files=[...e.target.files];
+  if(files.length)loadImgFiles(files);
+}
+function loadImgFiles(files){
+  newPostImages=[];
+  let loaded=0;
+  files.slice(0,10).forEach((file,i)=>{
+    const reader=new FileReader();
+    reader.onload=ev=>{
+      newPostImages[i]=ev.target.result;
+      loaded++;
+      if(loaded===Math.min(files.length,10))renderUploadPreview();
+    };
+    reader.readAsDataURL(file);
+  });
+}
+function renderUploadPreview(){
+  newPostImg=newPostImages[0]||null;
+  const area=$('upload-area');if(!area)return;
+  if(newPostImages.length===1){
+    area.innerHTML=`
+      <div class="img-prev" style="max-height:220px;overflow:hidden">
+        <img src="${newPostImages[0]}" alt="" style="width:100%;max-height:220px;object-fit:cover;border-radius:var(--r8);display:block"/>
+        <button class="img-rm" onclick="removeImg()">✕</button>
+      </div>`;
+  } else {
+    area.innerHTML=`
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:4px;border-radius:var(--r8);overflow:hidden;position:relative">
+        ${newPostImages.map((src,i)=>`<img src="${src}" style="width:100%;aspect-ratio:1;object-fit:cover;display:block"/>`).join('')}
+        <button class="img-rm" onclick="removeImg()" style="top:6px;right:6px">✕</button>
+      </div>
+      <div style="font-size:10px;color:var(--t3);margin-top:6px">${newPostImages.length} images uploaded — first used as feed thumbnail</div>`;
+  }
+}
+function removeImg(){
+  newPostImg=null;newPostImages=[];
+  const area=$('upload-area');if(!area)return;
+  area.innerHTML=`
+    <div class="upload-z" onclick="$('file-inp').click()" style="padding:36px" ondragover="event.preventDefault()" ondrop="handleImgDrop(event)">
+      <div class="uico" style="font-size:32px;opacity:.25;margin-bottom:10px">🖼</div>
+      <div class="ulbl" style="font-size:13px;color:var(--t2)">Click to upload or drag & drop</div>
+      <div class="ulbl" style="font-size:10px;margin-top:4px">JPG, PNG, GIF, MP4</div>
+    </div>
+    <input class="hidden-file" type="file" id="file-inp" accept="image/*,video/*" multiple onchange="handleImg(event)"/>`;
+}
+function createPost(pid){
+  const cap=$('np-cap').value.trim();
+  const dt=$('np-dt').value;
+  const status=$('np-status').value;
+  if(!dt){alert('Please set a scheduled date and time');return}
+  // Store all images on the post (first is thumbnail)
+  DB.posts.push({id:uid(),pid,type:newPostType,cap:cap||null,img:newPostImages[0]||null,imgs:newPostImages.length>1?newPostImages:null,at:new Date(dt).getTime(),status});
+  save(); closeModal(); renderContent(); renderSidebar();
+}
+
+// ─── MEMBERS ─────────────────────────────────────
+function openModal_Members(pid){
+  const proj=DB.projects.find(p=>p.id===pid);
+  const members=DB.users.filter(u=>u.projs.includes(pid));
+  const nonMembers=DB.users.filter(u=>!u.projs.includes(pid));
+  showModal(`
+    <div class="modal-head">
+      <h2>Members · ${esc(proj.name)}</h2>
+      <button class="btn btn-ghost btn-icon btn-sm" onclick="closeModal()"><svg width="13" height="13" viewBox="0 0 14 14" fill="none"><path d="M2 2l10 10M12 2L2 12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></button>
+    </div>
+    <div class="modal-body">
+      <div class="field" style="margin-bottom:4px"><label>Current members</label></div>
+      ${members.map(u=>`
+        <div class="mem-row">
+          <div class="av" style="${avStyle(u.role)}">${initials(u.name)}</div>
+          <div class="mem-info"><div class="mem-name">${esc(u.name)}</div><div class="mem-email">${esc(u.email)}</div></div>
+          <span class="mem-rbadge">${u.role}</span>
+          ${u.id!==CU.id?`<button class="btn btn-danger btn-sm" onclick="removeMember('${pid}','${u.id}')">Remove</button>`:''}
+        </div>`).join('')}
+      ${nonMembers.length?`
+        <div class="field" style="margin-top:18px;margin-bottom:8px"><label>Add member</label></div>
+        <div style="display:flex;gap:8px">
+          <select class="inp" id="add-m-sel" style="flex:1">
+            ${nonMembers.map(u=>`<option value="${u.id}">${esc(u.name)} (${u.role})</option>`).join('')}
+          </select>
+          <button class="btn btn-gold btn-sm" onclick="addMember('${pid}')">Add</button>
+        </div>`:`<p style="font-size:12px;color:var(--t3);margin-top:14px">All registered users are already members of this project.</p>`}
+    </div>
+    <div class="modal-foot"><button class="btn btn-outline" onclick="closeModal()">Done</button></div>`,
+  'modal-md');
+}
+function addMember(pid){
+  const uid_=$('add-m-sel')?.value;if(!uid_)return;
+  const u=DB.users.find(x=>x.id===uid_);
+  if(u&&!u.projs.includes(pid)){u.projs.push(pid);save()}
+  openModal_Members(pid); renderSidebar();
+}
+function removeMember(pid,userId){
+  const u=DB.users.find(x=>x.id===userId);
+  if(u){u.projs=u.projs.filter(p=>p!==pid);save()}
+  openModal_Members(pid); renderSidebar();
+}
+
+// ═══════════════════════════════════════════════════
+// BOOT
+// ═══════════════════════════════════════════════════
+boot();
+</script>
+</body>
+</html>
