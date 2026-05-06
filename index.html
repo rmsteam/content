@@ -391,7 +391,35 @@ if(!DB){
   ];
   save();
 }
-function save(){localStorage.setItem(DB_KEY,JSON.stringify(DB))}
+function save(){
+  try{localStorage.setItem(DB_KEY,JSON.stringify(DB))}
+  catch(e){
+    if(e.name==='QuotaExceededError'||e.code===22){
+      // Storage full — strip images from oldest posts and retry
+      var stripped=0;
+      for(var i=0;i<DB.posts.length&&stripped<3;i++){
+        if(DB.posts[i].img&&DB.posts[i].img.length>50000){DB.posts[i].img=null;stripped++}
+        if(DB.posts[i].imgs){DB.posts[i].imgs=null;stripped++}
+      }
+      try{localStorage.setItem(DB_KEY,JSON.stringify(DB))}
+      catch(e2){console.warn('Storage still full after cleanup',e2)}
+    }
+  }
+}
+
+function compressImg(dataUrl,cb){
+  var img=new Image();
+  img.onload=function(){
+    var canvas=document.createElement('canvas');
+    var max=800;
+    var w=img.width,h=img.height;
+    if(w>max||h>max){if(w>h){h=Math.round(h*max/w);w=max}else{w=Math.round(w*max/h);h=max}}
+    canvas.width=w;canvas.height=h;
+    canvas.getContext('2d').drawImage(img,0,0,w,h);
+    cb(canvas.toDataURL('image/jpeg',0.72));
+  };
+  img.src=dataUrl;
+}
 
 // STATE
 let CU=null,view='overview',projId=null,tab='feed',drawerPostId=null;
@@ -762,11 +790,18 @@ function handleDrop(e){e.preventDefault();loadFiles([...e.dataTransfer.files].fi
 function handleFiles(e){loadFiles([...e.target.files])}
 function loadFiles(files){
   if(!files.length)return;
-  newPostImgs=[];let done=0;
-  const toLoad=files.slice(0,10);
-  toLoad.forEach((f,i)=>{
-    const r=new FileReader();
-    r.onload=ev=>{newPostImgs[i]=ev.target.result;done++;if(done===toLoad.length)renderUploadPrev()};
+  newPostImgs=[];
+  var toLoad=files.slice(0,10);
+  var done=0;
+  toLoad.forEach(function(f,i){
+    var r=new FileReader();
+    r.onload=function(ev){
+      compressImg(ev.target.result,function(compressed){
+        newPostImgs[i]=compressed;
+        done++;
+        if(done===toLoad.length)renderUploadPrev();
+      });
+    };
     r.readAsDataURL(f);
   });
 }
@@ -791,7 +826,9 @@ function createPost(pid){
   var capEl=document.getElementById('np-cap'),dtEl=document.getElementById('np-dt'),stEl=document.getElementById('np-st');
   var cap=capEl?capEl.value.trim():'',dt=dtEl?dtEl.value:'',status=stEl?stEl.value:'new';
   if(!dt){alert('Please set a scheduled date and time');return}
-  DB.posts.push({id:uid(),pid,type:newPostType,cap:cap||null,img:newPostImgs[0]||null,imgs:newPostImgs.length>1?[...newPostImgs]:null,at:new Date(dt).getTime(),status});
+  var ts=new Date(dt).getTime();
+  if(isNaN(ts)){alert('Invalid date — please re-select the date and time');return}
+  DB.posts.push({id:uid(),pid,type:newPostType,cap:cap||null,img:newPostImgs[0]||null,imgs:newPostImgs.length>1?[...newPostImgs]:null,at:ts,status});
   save();closeModal();renderContent();renderSidebar();
 }
 
