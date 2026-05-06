@@ -399,7 +399,7 @@ let newPostType='post',newPostImgs=[],newProjColor=PCOLS[0],signupRole='manager'
 let _nuRole='manager';
 
 // HELPERS
-const $=id=>document.getElementById(id);
+window.$=function(id){return document.getElementById(id)};
 function ini(n){if(!n)return'?';return n.split(' ').filter(Boolean).map(w=>w[0]).join('').toUpperCase().slice(0,2)}
 function tEmoji(t){return{post:'🖼',story:'🎞',reel:'🎬'}[t]||'📄'}
 function fmtD(ts){return new Date(ts).toLocaleDateString('en-GB',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}
@@ -737,7 +737,7 @@ function openModal_NewPost(pid){
       <div class="field">
         <label>Images <span style="color:var(--t3);font-weight:400;font-size:10px;text-transform:none">up to 10 · click or drag & drop</span></label>
         <div id="upload-area" ondragover="event.preventDefault()" ondrop="handleDrop(event)">
-          <div class="upload-z" onclick="$('file-inp').click()" style="padding:26px">
+          <div class="upload-z" onclick="triggerFileInput()" style="padding:26px">
             <div style="font-size:26px;opacity:.2;margin-bottom:7px">🖼</div>
             <div style="font-size:13px;color:var(--t2)">Click to upload or drag & drop</div>
             <div style="font-size:10px;color:var(--t3);margin-top:3px">JPG · PNG · GIF · WEBP</div>
@@ -756,7 +756,8 @@ function openModal_NewPost(pid){
     </div>
     <div class="mfoot"><button class="btn btn-outline" onclick="closeModal()">Cancel</button><button class="btn btn-gold" onclick="createPost('${pid}')">Add post</button></div>`,'modal-md');
 }
-function pickPT(t){newPostType=t;['post','story','reel'].forEach(x=>$(`tb-${x}`)?.classList.toggle('on',x===t))}
+function triggerFileInput(){var el=document.getElementById('file-inp');if(el)el.click()}
+function pickPT(t){newPostType=t;['post','story','reel'].forEach(x=>{var el=document.getElementById('tb-'+x);if(el)el.classList.toggle('on',x===t)})}
 function handleDrop(e){e.preventDefault();loadFiles([...e.dataTransfer.files].filter(f=>f.type.startsWith('image/')))}
 function handleFiles(e){loadFiles([...e.target.files])}
 function loadFiles(files){
@@ -780,14 +781,15 @@ function renderUploadPrev(){
 }
 function clearImgs(){
   newPostImgs=[];
-  $('upload-area').innerHTML=`<div class="upload-z" onclick="$('file-inp').click()" style="padding:26px" ondragover="event.preventDefault()" ondrop="handleDrop(event)">
+  $('upload-area').innerHTML=`<div class="upload-z" onclick="triggerFileInput()" style="padding:26px" ondragover="event.preventDefault()" ondrop="handleDrop(event)">
     <div style="font-size:26px;opacity:.2;margin-bottom:7px">🖼</div>
     <div style="font-size:13px;color:var(--t2)">Click to upload or drag & drop</div>
     <div style="font-size:10px;color:var(--t3);margin-top:3px">JPG · PNG · GIF · WEBP</div>
   </div><input class="hf" type="file" id="file-inp" accept="image/*" multiple onchange="handleFiles(event)"/>`;
 }
 function createPost(pid){
-  const cap=$('np-cap').value.trim(),dt=$('np-dt').value,status=$('np-st').value;
+  var capEl=document.getElementById('np-cap'),dtEl=document.getElementById('np-dt'),stEl=document.getElementById('np-st');
+  var cap=capEl?capEl.value.trim():'',dt=dtEl?dtEl.value:'',status=stEl?stEl.value:'new';
   if(!dt){alert('Please set a scheduled date and time');return}
   DB.posts.push({id:uid(),pid,type:newPostType,cap:cap||null,img:newPostImgs[0]||null,imgs:newPostImgs.length>1?[...newPostImgs]:null,at:new Date(dt).getTime(),status});
   save();closeModal();renderContent();renderSidebar();
@@ -967,5 +969,6 @@ function exportPDF(pid){
 
 boot();
 </script>
+
 </body>
 </html>
